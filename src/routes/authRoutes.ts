@@ -1,13 +1,27 @@
 import { Router } from 'express';
 import { AuthController } from '../controllers/authController';
 import { ensureAuthenticated } from '../middlewares/ensureAuthenticated';
+import { validate } from '../middlewares/validate';
+import { loginRateLimiter } from '../middlewares/rateLimit'
+import { loginSchema, registerSchema } from '../schemas/authSchemas';
+
 
 export const authRoutes = Router();
 
 const authController = new AuthController();
+authRoutes.post(
+  '/login',
+  loginRateLimiter,
+  validate(loginSchema),
+  authController.login
+);
 
-authRoutes.post('/login', authController.login);
-authRoutes.post('/logout', authController.logout);
-authRoutes.post('/register', authController.register);
+authRoutes.post(
+  '/register',
+  validate(registerSchema),
+  authController.register
+);
+
+authRoutes.post('/logout', ensureAuthenticated, authController.logout);
+
 authRoutes.get('/me', ensureAuthenticated, authController.me);
-
